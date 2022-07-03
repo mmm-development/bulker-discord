@@ -1,6 +1,6 @@
 # Bulker Discord
 
-![Bulker Discord Edition: баннер](./docs/img/banner.png)
+![Bulker Logo](./docs/img/bulker_new_highlighted.png)
 
 ## Запуск
 
