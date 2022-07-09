@@ -9,4 +9,14 @@ func init() {
 	en_us["BPing_Name"] = "b-ping"
 	en_us["BPing_Description"] = "The test command used for health check"
 	en_us["BPing_Response"] = "I'm alive!"
+
+	en_us["BNew_Name"] = "b-create"
+	en_us["BNew_Description"] = "Create a new game session"
+	en_us["BNew_Caption"] = "New Bunker Session"
+	en_us["BNew_HostCaption"] = "Host"
+	en_us["BNew_PlayersCaption"] = "Players' List"
+	en_us["BNew_JoinButton"] = "I'm in!"
+	en_us["BNew_QuitButton"] = "I'm out."
+	en_us["BNew_HostStartButton"] = "Start the Game"
+	en_us["BNew_HostCancelButton"] = "Cancel"
 }
