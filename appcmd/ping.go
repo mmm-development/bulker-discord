@@ -1,31 +1,26 @@
 package appcmd
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/mmm-development/bulker-discord/locale"
+)
 
 var (
 	BPing_Name   = "b-ping"
 	BPing_AppCmd = discordgo.ApplicationCommand{
-		Name:        BPing_Name,
-		Description: "The test command used for health check",
-		Type:        discordgo.ChatApplicationCommand,
-		NameLocalizations: &map[discordgo.Locale]string{
-			discordgo.Russian: "б-пинг",
-		},
-		DescriptionLocalizations: &map[discordgo.Locale]string{
-			discordgo.Russian: "Тестовая команда для проверки работоспособности бота",
-		},
+		Name:                     BPing_Name,
+		Description:              "The test command used for health check",
+		Type:                     discordgo.ChatApplicationCommand,
+		NameLocalizations:        locale.L.LocaleMap("BPing_Name"),
+		DescriptionLocalizations: locale.L.LocaleMap("BPing_Description"),
 	}
 )
 
 func BPing_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	PingResponseLocalization := map[discordgo.Locale]string{
-		discordgo.Russian:   "Я жив!",
-		discordgo.EnglishUS: "I'm alive!",
-	}
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: PingResponseLocalization[i.Locale],
+			Content: locale.L.Get(i.Locale, "BPing_Response"),
 			Flags:   uint64(discordgo.MessageFlagsEphemeral),
 		},
 	})
