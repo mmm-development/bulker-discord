@@ -1,4 +1,4 @@
-package log
+package clog
 
 import (
 	"fmt"
@@ -13,6 +13,10 @@ const (
 	WARNING  PriorityLevel = 30
 	ERROR    PriorityLevel = 40
 	CRITICAL PriorityLevel = 50
+)
+
+var (
+	L Logger = Logger{logOuts: make([]priorityWriter, 0)}
 )
 
 func (pl PriorityLevel) String() string {
@@ -40,12 +44,6 @@ type Logger struct {
 	logOuts []priorityWriter
 }
 
-func NewLogger() Logger {
-	return Logger{
-		logOuts: make([]priorityWriter, 0),
-	}
-}
-
 func (l *Logger) Register(stream io.Writer, priority PriorityLevel) {
 	l.logOuts = append(l.logOuts, priorityWriter{
 		outstr:   stream,
@@ -58,8 +56,12 @@ func (l Logger) Log(priority PriorityLevel, msg string) {
 		if writer.priority > priority {
 			continue
 		}
-		io.WriteString(writer.outstr, fmt.Sprintf("[%s] %s", priority, msg))
+		io.WriteString(writer.outstr, fmt.Sprintf("[%s] %s\n", priority, msg))
 	}
+}
+
+func (l Logger) Debug(msg string) {
+	l.Log(DEBUG, msg)
 }
 
 func (l Logger) Info(msg string) {
