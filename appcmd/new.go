@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mmm-development/bulker-discord/bend"
 	"github.com/mmm-development/bulker-discord/locale"
 )
 
@@ -17,8 +18,60 @@ var (
 		DescriptionLocalizations: locale.L.LocaleMap("BNew_Description"),
 	}
 
-	BNew_Sessions = make(map[string]string)
+	BNew_Sessions = make(bend.GameSessionMap)
 )
+
+func BNew_Message(guildID string, i *discordgo.InteractionCreate) *discordgo.MessageSend {
+	gsdata, statusCode := BNew_Sessions.GetPlayers(guildID)
+	if statusCode != bend.OK {
+		return nil
+	}
+
+	playersList := ""
+	for _, name := range gsdata.Joined {
+		playersList += fmt.Sprintf("<@%s>\n", name)
+	}
+	if len(playersList) == 0 {
+		playersList = "-"
+	}
+
+	return &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Color: 0xFFE299,
+				Title: locale.L.Get(i.Locale, "BNew_Caption"),
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:  locale.L.Get(i.Locale, "BNew_HostCaption"),
+						Value: fmt.Sprintf("<@%s>", gsdata.Host),
+					},
+					{
+						Name:  locale.L.Get(i.Locale, "BNew_PlayersCaption"),
+						Value: playersList,
+					},
+				},
+			},
+		},
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    locale.L.Get(i.Locale, "BNew_JoinButton"),
+						Style:    discordgo.SuccessButton,
+						Disabled: false,
+						CustomID: "b-join",
+					},
+					discordgo.Button{
+						Label:    locale.L.Get(i.Locale, "BNew_QuitButton"),
+						Style:    discordgo.DangerButton,
+						Disabled: false,
+						CustomID: "b-leave",
+					},
+				},
+			},
+		},
+	}
+}
 
 func BNew_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	m, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
@@ -68,7 +121,9 @@ func BNew_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		fmt.Printf("[ERROR] Creating game session:")
 		fmt.Println(err)
 	} else {
-		BNew_Sessions[i.GuildID] = m.ID
+		if BNew_Sessions.NewGameSession(i.GuildID, i.Member.User.ID) != bend.OK {
+
+		}
 
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
