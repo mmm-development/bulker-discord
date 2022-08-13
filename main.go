@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,7 +24,7 @@ func init() {
 func main() {
 	dg, err := discordgo.New("Bot " + *Token)
 	if err != nil {
-		clog.L.Fatal(fmt.Sprintf("Creating Discord Session:\n%v", err))
+		clog.L.Fatal("Creating Discord Session:\n%v", err)
 	}
 
 	dg.AddHandler(ready)
@@ -35,7 +34,7 @@ func main() {
 
 	err = dg.Open()
 	if err != nil {
-		clog.L.Fatal(fmt.Sprintf("Opening connection:\n%v", err))
+		clog.L.Fatal("Opening connection:\n%v", err)
 	}
 	defer dg.Close()
 
@@ -44,7 +43,7 @@ func main() {
 	for i, v := range appcmd.Commands {
 		cmd, err := dg.ApplicationCommandCreate(dg.State.User.ID, "", v)
 		if err != nil {
-			clog.L.Fatal(fmt.Sprintf("Creating '%v' command:\n%v", v.Name, err))
+			clog.L.Fatal("Creating '%v' command:\n%v", v.Name, err)
 		}
 		registeredCommands[i] = cmd
 	}
@@ -53,7 +52,7 @@ func main() {
 		for _, v := range registeredCommands {
 			err := dg.ApplicationCommandDelete(dg.State.User.ID, "", v.ID)
 			if err != nil {
-				clog.L.Fatal(fmt.Sprintf("Removing '%v' command:\n%v", v.Name, err))
+				clog.L.Fatal("Removing '%v' command:\n%v", v.Name, err)
 			}
 		}
 	}()
@@ -65,7 +64,7 @@ func main() {
 }
 
 func ready(s *discordgo.Session, r *discordgo.Ready) {
-	clog.L.Info(fmt.Sprintf("Bot %s is ready", r.User.Username))
+	clog.L.Info("Bot %s is ready", r.User.Username)
 }
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {

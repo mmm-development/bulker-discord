@@ -51,36 +51,37 @@ func (l *Logger) Register(stream io.Writer, priority PriorityLevel) {
 	})
 }
 
-func (l Logger) Log(priority PriorityLevel, msg string) {
+func (l Logger) Log(priority PriorityLevel, msgf string, a ...interface{}) {
+	msg := fmt.Sprintf("[%s] %s\n", priority, fmt.Sprintf(msgf, a...))
 	for _, writer := range l.logOuts {
 		if writer.priority > priority {
 			continue
 		}
-		io.WriteString(writer.outstr, fmt.Sprintf("[%s] %s\n", priority, msg))
+		io.WriteString(writer.outstr, msg)
 	}
 }
 
-func (l Logger) Debug(msg string) {
-	l.Log(DEBUG, msg)
+func (l Logger) Debug(msg string, a ...interface{}) {
+	l.Log(DEBUG, msg, a...)
 }
 
-func (l Logger) Info(msg string) {
-	l.Log(INFO, msg)
+func (l Logger) Info(msg string, a ...interface{}) {
+	l.Log(INFO, msg, a...)
 }
 
-func (l Logger) Warning(msg string) {
-	l.Log(WARNING, msg)
+func (l Logger) Warning(msg string, a ...interface{}) {
+	l.Log(WARNING, msg, a...)
 }
 
-func (l Logger) Error(msg string) {
-	l.Log(ERROR, msg)
+func (l Logger) Error(msg string, a ...interface{}) {
+	l.Log(ERROR, msg, a...)
 }
 
-func (l Logger) Critical(msg string) {
-	l.Log(CRITICAL, msg)
+func (l Logger) Critical(msg string, a ...interface{}) {
+	l.Log(CRITICAL, msg, a...)
 }
 
-func (l Logger) Fatal(msg string) {
-	l.Log(CRITICAL, msg)
+func (l Logger) Fatal(msg string, a ...interface{}) {
+	l.Log(CRITICAL, msg, a...)
 	panic(msg)
 }

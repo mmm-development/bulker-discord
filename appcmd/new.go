@@ -1,10 +1,12 @@
 package appcmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/mmm-development/bulker-discord/bend"
+	"github.com/mmm-development/bulker-discord/clog"
 	"github.com/mmm-development/bulker-discord/locale"
 )
 
@@ -18,10 +20,11 @@ var (
 		DescriptionLocalizations: locale.L.LocaleMap("BNew_Description"),
 	}
 
-	BNew_Sessions = make(bend.GameSessionMap)
+	BNew_Sessions       = make(bend.GameSessionMap)
+	BNew_SessionInitMsg = make(map[string]string)
 )
 
-func BNew_Message(guildID string, i *discordgo.InteractionCreate) *discordgo.MessageSend {
+func BNew_Message(guildID string, userLocale discordgo.Locale) *discordgo.MessageSend {
 	gsdata, statusCode := BNew_Sessions.GetPlayers(guildID)
 	if statusCode != bend.OK {
 		return nil
@@ -39,14 +42,14 @@ func BNew_Message(guildID string, i *discordgo.InteractionCreate) *discordgo.Mes
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Color: 0xFFE299,
-				Title: locale.L.Get(i.Locale, "BNew_Caption"),
+				Title: locale.L.Get(userLocale, "BNew_Caption"),
 				Fields: []*discordgo.MessageEmbedField{
 					{
-						Name:  locale.L.Get(i.Locale, "BNew_HostCaption"),
+						Name:  locale.L.Get(userLocale, "BNew_HostCaption"),
 						Value: fmt.Sprintf("<@%s>", gsdata.Host),
 					},
 					{
-						Name:  locale.L.Get(i.Locale, "BNew_PlayersCaption"),
+						Name:  locale.L.Get(userLocale, "BNew_PlayersCaption"),
 						Value: playersList,
 					},
 				},
@@ -56,16 +59,49 @@ func BNew_Message(guildID string, i *discordgo.InteractionCreate) *discordgo.Mes
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.Button{
-						Label:    locale.L.Get(i.Locale, "BNew_JoinButton"),
+						Label:    locale.L.Get(userLocale, "BNew_JoinButton"),
 						Style:    discordgo.SuccessButton,
 						Disabled: false,
-						CustomID: "b-join",
+						CustomID: BJoin_Name,
 					},
 					discordgo.Button{
-						Label:    locale.L.Get(i.Locale, "BNew_QuitButton"),
+						Label:    locale.L.Get(userLocale, "BNew_QuitButton"),
 						Style:    discordgo.DangerButton,
 						Disabled: false,
-						CustomID: "b-leave",
+						CustomID: BLeave_Name,
+					},
+				},
+			},
+		},
+	}
+}
+
+func BNew_ModeratorMessage(userLocale discordgo.Locale) *discordgo.InteractionResponse {
+	return &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: uint64(discordgo.MessageFlagsEphemeral),
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.Button{
+							Emoji: discordgo.ComponentEmoji{
+								Name: "✔️",
+							},
+							Label:    locale.L.Get(userLocale, "BNew_HostStartButton"),
+							Style:    discordgo.SuccessButton,
+							Disabled: false,
+							CustomID: BStart_Name,
+						},
+						discordgo.Button{
+							Emoji: discordgo.ComponentEmoji{
+								Name: "❌",
+							},
+							Label:    locale.L.Get(userLocale, "BNew_HostCancelButton"),
+							Style:    discordgo.DangerButton,
+							Disabled: false,
+							CustomID: BAbort_Name,
+						},
 					},
 				},
 			},
@@ -74,91 +110,61 @@ func BNew_Message(guildID string, i *discordgo.InteractionCreate) *discordgo.Mes
 }
 
 func BNew_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	m, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{
-			{
-				Color: 0xFFE299,
-				Title: locale.L.Get(i.Locale, "BNew_Caption"),
-				Fields: []*discordgo.MessageEmbedField{
-					{
-						Name:  locale.L.Get(i.Locale, "BNew_HostCaption"),
-						Value: fmt.Sprintf("<@%s>", i.Member.User.ID),
-					},
-					{
-						Name:  locale.L.Get(i.Locale, "BNew_PlayersCaption"),
-						Value: "-",
-					},
-				},
-			},
-		},
-		Components: []discordgo.MessageComponent{
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.Button{
-						Label:    locale.L.Get(i.Locale, "BNew_JoinButton"),
-						Style:    discordgo.SuccessButton,
-						Disabled: false,
-						CustomID: "b-join",
-					},
-					discordgo.Button{
-						Label:    locale.L.Get(i.Locale, "BNew_QuitButton"),
-						Style:    discordgo.DangerButton,
-						Disabled: false,
-						CustomID: "b-leave",
-					},
-				},
-			},
+	var err error
+	var statusCode bend.GameSessionReturnCode
+	var st *discordgo.Message
+	var msg *discordgo.MessageSend
+
+	statusCode = BNew_Sessions.NewGameSession(i.GuildID, i.Member.User.ID)
+	if statusCode != bend.OK {
+		goto ON_CREATE_ERROR_INTERACTION
+	}
+
+	msg = BNew_Message(i.GuildID, i.Locale)
+	if msg == nil {
+		err = errors.New("failed to create game session message")
+		goto ON_INIT_ERROR_INTERACTION
+	}
+
+	err = s.InteractionRespond(i.Interaction, BNew_ModeratorMessage(i.Locale))
+	if err != nil {
+		goto ON_INIT_ERROR_INTERACTION
+	}
+
+	st, err = s.ChannelMessageSendComplex(i.ChannelID, msg)
+	if err != nil {
+		goto ON_INIT_ERROR_INTERACTION
+	}
+
+	BNew_SessionInitMsg[i.GuildID] = st.ID
+	return
+
+ON_CREATE_ERROR_INTERACTION:
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: locale.L.Get(i.Locale, statusCode.LocaleKey()),
+			Flags:   uint64(discordgo.MessageFlagsEphemeral),
 		},
 	})
-	if err != nil {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "failed to create game session :(",
-				Flags:   uint64(discordgo.MessageFlagsEphemeral),
-			},
-		})
-		fmt.Printf("[ERROR] Creating game session:")
-		fmt.Println(err)
-	} else {
-		if BNew_Sessions.NewGameSession(i.GuildID, i.Member.User.ID) != bend.OK {
+	clog.L.Info("Creating game session:\n%s", locale.L.Get(locale.DefLocale, statusCode.LocaleKey()))
+	return
 
-		}
-
-		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Flags: uint64(discordgo.MessageFlagsEphemeral),
-				Components: []discordgo.MessageComponent{
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.Button{
-								Emoji: discordgo.ComponentEmoji{
-									Name: "✔️",
-								},
-								Label:    locale.L.Get(i.Locale, "BNew_HostStartButton"),
-								Style:    discordgo.SuccessButton,
-								Disabled: false,
-								CustomID: "b-start",
-							},
-							discordgo.Button{
-								Emoji: discordgo.ComponentEmoji{
-									Name: "❌",
-								},
-								Label:    locale.L.Get(i.Locale, "BNew_HostCancelButton"),
-								Style:    discordgo.DangerButton,
-								Disabled: false,
-								CustomID: "b-abort",
-							},
-						},
-					},
-				},
-			},
-		})
-
+ON_INIT_ERROR_INTERACTION:
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "failed to create game session :(",
+			Flags:   uint64(discordgo.MessageFlagsEphemeral),
+		},
+	})
+	clog.L.Error("Creating game session:\n%v", err)
+	BNew_Sessions.CleanGameSession(i.GuildID)
+	if _, ok := BNew_SessionInitMsg[i.GuildID]; ok {
+		err = s.ChannelMessageDelete(i.ChannelID, BNew_SessionInitMsg[i.GuildID])
 		if err != nil {
-			fmt.Printf("[ERROR] Creating host menu:")
-			fmt.Println(err)
+			clog.L.Error("Deleting game session message:\n%v", err)
 		}
+		delete(BNew_SessionInitMsg, i.GuildID)
 	}
 }
