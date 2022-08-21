@@ -1,4 +1,4 @@
-package appcmd
+package discord_frontend
 
 import "github.com/bwmarrin/discordgo"
 

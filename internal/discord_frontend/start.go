@@ -1,13 +1,13 @@
-package appcmd
+package discord_frontend
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/mmm-development/bulker-discord/bend"
-	"github.com/mmm-development/bulker-discord/clog"
+	"github.com/mmm-development/bulker-discord/internal/clog"
 	"github.com/mmm-development/bulker-discord/locale"
+	bend "github.com/mmm-development/bulker-discord/pkg/bulker_backend"
 )
 
 var (

@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/mmm-development/bulker-discord/appcmd"
-	"github.com/mmm-development/bulker-discord/clog"
+	"github.com/mmm-development/bulker-discord/internal/clog"
+	discord "github.com/mmm-development/bulker-discord/internal/discord_frontend"
 )
 
 var (
@@ -39,8 +39,8 @@ func main() {
 	defer dg.Close()
 
 	clog.L.Info("Registering commands...")
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(appcmd.Commands))
-	for i, v := range appcmd.Commands {
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(discord.Commands))
+	for i, v := range discord.Commands {
 		cmd, err := dg.ApplicationCommandCreate(dg.State.User.ID, "", v)
 		if err != nil {
 			clog.L.Fatal("Creating '%v' command:\n%v", v.Name, err)
@@ -70,11 +70,11 @@ func ready(s *discordgo.Session, r *discordgo.Ready) {
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
-		if h, ok := appcmd.CommandHandlers[i.ApplicationCommandData().Name]; ok {
+		if h, ok := discord.CommandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
 		}
 	case discordgo.InteractionMessageComponent:
-		if h, ok := appcmd.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
+		if h, ok := discord.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
 			h(s, i)
 		}
 	}

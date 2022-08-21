@@ -1,18 +1,18 @@
-package appcmd
+package discord_frontend
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/mmm-development/bulker-discord/bend"
-	"github.com/mmm-development/bulker-discord/clog"
+	"github.com/mmm-development/bulker-discord/internal/clog"
 	"github.com/mmm-development/bulker-discord/locale"
+	bend "github.com/mmm-development/bulker-discord/pkg/bulker_backend"
 )
 
 var (
-	BLeave_Name = "b-leave"
+	BJoin_Name = "b-join"
 )
 
-func BLeave_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	code := BNew_Sessions.DeletePlayer(i.GuildID, i.Member.User.ID)
+func BJoin_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	code := BNew_Sessions.NewPlayer(i.GuildID, i.Member.User.ID)
 	if code != bend.OK {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -26,7 +26,7 @@ func BLeave_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: locale.L.Get(i.Locale, "NewGameSession_LeaveOK"),
+			Content: locale.L.Get(i.Locale, "NewGameSession_JoinOK"),
 			Flags:   uint64(discordgo.MessageFlagsEphemeral),
 		},
 	})
