@@ -3,6 +3,7 @@ package clog
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 type PriorityLevel int
@@ -52,7 +53,7 @@ func (l *Logger) Register(stream io.Writer, priority PriorityLevel) {
 }
 
 func (l Logger) Log(priority PriorityLevel, msgf string, a ...interface{}) {
-	msg := fmt.Sprintf("[%s] %s\n", priority, fmt.Sprintf(msgf, a...))
+	msg := fmt.Sprintf("[%s] %s\n", priority, fmt.Sprintf(strings.ReplaceAll(msgf, "\n", fmt.Sprintf("\n[%s]", priority)), a...))
 	for _, writer := range l.logOuts {
 		if writer.priority > priority {
 			continue
