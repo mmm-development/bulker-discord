@@ -37,13 +37,15 @@ func BStart_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 
-	for _, playerID := range playersSet.Joined {
+	framedPlayersSet := make([]string, len(playersSet.Joined))
+	for i, playerID := range playersSet.Joined {
 		userSession, err := s.UserChannelCreate(playerID)
 		if err != nil {
 			clog.L.Error("Responding to user <@%s>:\n%v", playerID, err)
 			continue
 		}
 		s.ChannelMessageSend(userSession.ID, ":eye:")
+		framedPlayersSet[i] = "<@" + playerID + ">\n"
 	}
 
 	hostSession, err := s.UserChannelCreate(playersSet.Host)
@@ -51,5 +53,6 @@ func BStart_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		clog.L.Error("Responding to user <@%s>:\n%v", playersSet.Host, err)
 		return
 	}
-	s.ChannelMessageSend(hostSession.ID, fmt.Sprintf("Собрали для тебя этих игроков:\n%sКак тебе?", strings.Join(playersSet.Joined, "\n")))
+
+	s.ChannelMessageSend(hostSession.ID, fmt.Sprintf("Собрали для тебя этих игроков:\n%sКак тебе?", strings.Join(framedPlayersSet, "")))
 }
