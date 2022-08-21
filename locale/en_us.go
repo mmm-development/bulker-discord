@@ -20,6 +20,10 @@ func init() {
 	en_us["BNew_HostStartButton"] = "Start the Game"
 	en_us["BNew_HostCancelButton"] = "Cancel"
 
+	en_us["NewGameSession_StartOK"] = "The game has begun!"
+	en_us["NewGameSession_AbortOK"] = "The game has been cancelled."
+	en_us["NewGameSession_JoinOK"] = "You successfully joined the game!"
+	en_us["NewGameSession_LeaveOK"] = "You left the game."
 	en_us["NewGameSession_IsAHost"] = "You can't join the game as a player. You're the host!"
 	en_us["NewGameSession_PlayerExists"] = "You're already in the game!"
 	en_us["NewGameSession_PlayerNotExists"] = "You're already out of the game!"

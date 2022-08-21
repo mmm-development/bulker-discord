@@ -20,6 +20,10 @@ func init() {
 	ru["BNew_HostStartButton"] = "Начать игру"
 	ru["BNew_HostCancelButton"] = "Отменить"
 
+	ru["NewGameSession_StartOK"] = "Игра успешно начата!"
+	ru["NewGameSession_AbortOK"] = "Игра успешно отменена."
+	ru["NewGameSession_JoinOK"] = "Вы записаны в игру!"
+	ru["NewGameSession_LeaveOK"] = "Вы вышли из игры."
 	ru["NewGameSession_IsAHost"] = "Вы не можете присоединиться к игре как игрок. Вы ведь ведущий!"
 	ru["NewGameSession_PlayerExists"] = "Вы уже в игре!"
 	ru["NewGameSession_PlayerNotExists"] = "Вы уже вне игры!"

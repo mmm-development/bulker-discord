@@ -15,7 +15,9 @@ var (
 )
 
 func BStart_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	BNew_SessionStartSignal[i.GuildID] <- struct{}{}
 	playersSet, code := BNew_Sessions.CleanGameSession(i.GuildID)
+
 	if code != bend.OK {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -27,14 +29,13 @@ func BStart_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		clog.L.Info("Starting game session:\n%s", locale.L.Get(locale.DefLocale, code.LocaleKey()))
 		return
 	}
-
-	if _, ok := BNew_SessionInitMsg[i.GuildID]; ok {
-		err := s.ChannelMessageDelete(i.ChannelID, BNew_SessionInitMsg[i.GuildID])
-		if err != nil {
-			clog.L.Error("Deleting game session message:\n%v", err)
-		}
-		delete(BNew_SessionInitMsg, i.GuildID)
-	}
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: locale.L.Get(i.Locale, "NewGameSession_StartOK"),
+			Flags:   uint64(discordgo.MessageFlagsEphemeral),
+		},
+	})
 
 	for _, playerID := range playersSet.Joined {
 		userSession, err := s.UserChannelCreate(playerID)

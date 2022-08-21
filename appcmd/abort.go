@@ -12,7 +12,9 @@ var (
 )
 
 func BAbort_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	BNew_SessionStartSignal[i.GuildID] <- struct{}{}
 	_, code := BNew_Sessions.CleanGameSession(i.GuildID)
+
 	if code != bend.OK {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -24,12 +26,11 @@ func BAbort_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		clog.L.Info("Aborting game session:\n%s", locale.L.Get(locale.DefLocale, code.LocaleKey()))
 		return
 	}
-
-	if _, ok := BNew_SessionInitMsg[i.GuildID]; ok {
-		err := s.ChannelMessageDelete(i.ChannelID, BNew_SessionInitMsg[i.GuildID])
-		if err != nil {
-			clog.L.Error("Deleting game session message:\n%v", err)
-		}
-		delete(BNew_SessionInitMsg, i.GuildID)
-	}
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: locale.L.Get(i.Locale, "NewGameSession_AbortOK"),
+			Flags:   uint64(discordgo.MessageFlagsEphemeral),
+		},
+	})
 }

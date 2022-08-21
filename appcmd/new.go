@@ -20,8 +20,9 @@ var (
 		DescriptionLocalizations: locale.L.LocaleMap("BNew_Description"),
 	}
 
-	BNew_Sessions       = make(bend.GameSessionMap)
-	BNew_SessionInitMsg = make(map[string]string)
+	BNew_Sessions           = make(bend.GameSessionMap)
+	BNew_SessionInitMsg     = make(map[string]string)
+	BNew_SessionStartSignal = make(map[string]chan struct{})
 )
 
 func BNew_Message(guildID string, userLocale discordgo.Locale) *discordgo.MessageSend {
@@ -135,8 +136,21 @@ func BNew_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		goto ON_INIT_ERROR_INTERACTION
 	}
-
 	BNew_SessionInitMsg[i.GuildID] = st.ID
+
+	BNew_SessionStartSignal[i.GuildID] = make(chan struct{})
+	<-BNew_SessionStartSignal[i.GuildID]
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{Content: "-", Components: []discordgo.MessageComponent{}})
+	if err != nil {
+		clog.L.Error("Cleaning game session control panel:\n%v", err)
+	}
+	close(BNew_SessionStartSignal[i.GuildID])
+	delete(BNew_SessionStartSignal, i.GuildID)
+	delete(BNew_SessionInitMsg, i.GuildID)
+	err = s.ChannelMessageDelete(i.ChannelID, st.ID)
+	if err != nil {
+		clog.L.Error("Deleting game session message:\n%v", err)
+	}
 	return
 
 ON_CREATE_ERROR_INTERACTION:
@@ -160,11 +174,10 @@ ON_INIT_ERROR_INTERACTION:
 	})
 	clog.L.Error("Creating game session:\n%v", err)
 	BNew_Sessions.CleanGameSession(i.GuildID)
-	if _, ok := BNew_SessionInitMsg[i.GuildID]; ok {
-		err = s.ChannelMessageDelete(i.ChannelID, BNew_SessionInitMsg[i.GuildID])
+	if st != nil {
+		err = s.ChannelMessageDelete(i.ChannelID, st.ID)
 		if err != nil {
 			clog.L.Error("Deleting game session message:\n%v", err)
 		}
-		delete(BNew_SessionInitMsg, i.GuildID)
 	}
 }
