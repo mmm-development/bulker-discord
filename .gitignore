@@ -10,6 +10,7 @@
 !go.mod
 
 !/docs/**
+!/assets/**
 !README.md
 !LICENSE
 
