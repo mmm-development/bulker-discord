@@ -26,7 +26,7 @@ func BJoin_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: locale.L.Get(i.Locale, "NewGameSession_JoinOK"),
+			Content: locale.L.Get(i.Locale, "NewGameGather_JoinOK"),
 			Flags:   uint64(discordgo.MessageFlagsEphemeral),
 		},
 	})

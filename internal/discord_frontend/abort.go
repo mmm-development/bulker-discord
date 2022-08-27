@@ -13,7 +13,7 @@ var (
 
 func BAbort_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	BNew_SessionStartSignal[i.GuildID] <- struct{}{}
-	_, code := BNew_Sessions.CleanGameSession(i.GuildID)
+	_, code := BNew_Sessions.CleanGameGather(i.GuildID)
 
 	if code != bend.OK {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -29,7 +29,7 @@ func BAbort_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: locale.L.Get(i.Locale, "NewGameSession_AbortOK"),
+			Content: locale.L.Get(i.Locale, "NewGameGather_AbortOK"),
 			Flags:   uint64(discordgo.MessageFlagsEphemeral),
 		},
 	})

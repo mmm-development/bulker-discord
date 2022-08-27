@@ -20,7 +20,7 @@ var (
 		DescriptionLocalizations: locale.L.LocaleMap("BNew_Description"),
 	}
 
-	BNew_Sessions           = make(bend.GameSessionMap)
+	BNew_Sessions           = make(bend.GameGatherMap)
 	BNew_SessionInitMsg     = make(map[string]string)
 	BNew_SessionStartSignal = make(map[string]chan struct{})
 )
@@ -112,11 +112,11 @@ func BNew_ModeratorMessage(userLocale discordgo.Locale) *discordgo.InteractionRe
 
 func BNew_Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	var err error
-	var statusCode bend.GameSessionReturnCode
+	var statusCode bend.GameGatherReturnCode
 	var st *discordgo.Message
 	var msg *discordgo.MessageSend
 
-	statusCode = BNew_Sessions.NewGameSession(i.GuildID, i.Member.User.ID)
+	statusCode = BNew_Sessions.NewGameGather(i.GuildID, i.Member.User.ID)
 	if statusCode != bend.OK {
 		goto ON_CREATE_ERROR_INTERACTION
 	}
@@ -173,7 +173,7 @@ ON_INIT_ERROR_INTERACTION:
 		},
 	})
 	clog.L.Error("Creating game session:\n%v", err)
-	BNew_Sessions.CleanGameSession(i.GuildID)
+	BNew_Sessions.CleanGameGather(i.GuildID)
 	if st != nil {
 		err = s.ChannelMessageDelete(i.ChannelID, st.ID)
 		if err != nil {
